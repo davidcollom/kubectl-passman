@@ -2,7 +2,7 @@ package keyring
 
 import (
 	"github.com/chrisns/kubectl-passman/pkg/provider"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
 )
 
 const (
