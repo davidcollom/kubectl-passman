@@ -103,7 +103,7 @@ jobs:
         with:
           name: VERSION
           path: VERSION
-      - run: go build -a -ldflags "-X main.VERSION=$(cat VERSION/VERSION)" -o ${BUILD_FILENAME}
+      - run: go build -a -ldflags "-X main.VERSION=$(cat VERSION/VERSION)" -o ${BUILD_FILENAME} ./cmd/kubectl-passman
         env:
           GOOS: ${{matrix.OS}}
           GOARCH: ${{matrix.ARCH}}
