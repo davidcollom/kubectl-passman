@@ -1,13 +1,16 @@
 name: CI Pipeline
-on:
-  push:
-    paths-ignore:
-      - README.md
-    branches:
-      - "**"
-    tags-ignore:
-      - build-refs**
-  pull_request:
+
+# Disable pipeline
+on: {}
+# on:
+#   push:
+#     paths-ignore:
+#       - README.md
+#     branches:
+#       - "**"
+#     tags-ignore:
+#       - build-refs**
+#   pull_request:
 
 env:
   HUB_VERSION: 2.12.7

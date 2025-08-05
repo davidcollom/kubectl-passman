@@ -1,0 +1,143 @@
+# GoReleaser configuration
+version: 2
+
+project_name: kubectl-passman
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+
+builds:
+  - main: ./cmd/kubectl-passman
+    binary: kubectl-passman
+    ldflags:
+      - -s -w
+      - -X main.VERSION={{.Version}}
+      - -X main.COMMIT={{.Commit}}
+      - -X main.DATE={{.Date}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+      - freebsd
+      - netbsd
+      - openbsd
+    goarch:
+      - amd64
+      - arm64
+      - arm
+      - 386
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm64
+      - goos: netbsd
+        goarch: arm64
+      - goos: openbsd
+        goarch: arm64
+
+archives:
+  - format: zip
+    name_template: >-
+      {{ .ProjectName }}-
+      {{- .Os }}-
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^build:'
+      - typo
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: 'New Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Dependencies'
+      regexp: '^.*?deps(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: 'Other'
+      order: 999
+
+release:
+  github:
+    owner: chrisns
+    name: kubectl-passman
+  draft: false
+  prerelease: auto
+  name_template: "{{.ProjectName}} {{.Version}}"
+  footer: |
+    ## Installation
+
+    ### Krew (recommended)
+    ```bash
+    kubectl krew install passman
+    ```
+
+    ### Manual Installation
+    Download the appropriate binary for your platform from the assets below and place it in your PATH.
+
+# Krew plugin manifest
+krews:
+  - name: passman
+    homepage: https://github.com/chrisns/kubectl-passman
+    short_description: Store kubeconfig credentials in keychains or password managers
+    description: |
+      kubectl-passman is a kubectl plugin that allows you to store your kubeconfig
+      credentials in various password managers including:
+      - System keychain/keyring (macOS/Linux/Windows)
+      - 1Password Connect
+      - HashiCorp Vault
+      - CyberArk Conjur
+      - gopass
+    caveats: |
+      This plugin requires a password manager backend to be configured.
+      See the documentation for setup instructions.
+
+# Homebrew tap (optional)
+brews:
+  - repository:
+      owner: chrisns
+      name: homebrew-tap
+    homepage: https://github.com/chrisns/kubectl-passman
+    description: Store kubeconfig credentials in keychains or password managers
+    license: Apache-2.0
+    folder: Formula
+    dependencies:
+      - name: kubectl
+    test: |
+      system "#{bin}/kubectl-passman --version"
+    install: |
+      bin.install "kubectl-passman"
