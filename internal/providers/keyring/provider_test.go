@@ -13,7 +13,7 @@ import (
 func TestMain(m *testing.M) {
 	keyring.MockInit()
 	// Mock a keyring entry for testing
-	keyring.Set(Service, "foo", "bar")
+	_ = keyring.Set(Service, "foo", "bar")
 
 	// Setup code if needed
 	code := m.Run()
