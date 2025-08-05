@@ -110,11 +110,49 @@ kubectl config set-credentials \
  --exec-arg=kubectl-prod-user # name of [item-name] you used when you wrote to the password manager
 ```
 
+## Development
+
+This project follows Go best practices for project structure. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/chrisns/kubectl-passman.git
+cd kubectl-passman
+
+# Build the project
+make build
+
+# Run tests
+make test
+
+# Run the binary
+./bin/kubectl-passman --help
+```
+
+### Project Structure
+
+```
+kubectl-passman/
+├── cmd/kubectl-passman/     # Main application entry point
+├── internal/                # Private application code
+│   ├── cli/                 # CLI application logic
+│   └── providers/           # Password manager providers
+├── pkg/passman/             # Public library code
+└── Makefile                 # Build automation
+```
+
 ## Build
 
-``` bash
-go build
+```bash
+# Using Makefile (recommended)
+make build
+
+# Or directly with go
+go build ./cmd/kubectl-passman
 ```
+
 > Note: kubectl-passman will build slightly differently on Darwin (Mac OS) to other operation systems because it uses the [go-keychain](https://github.com/keybase/go-keychain) library that needs libraries that only exist on a mac so that it can natively talk to the keychain. When compiling for other operating systems you'll get [go-keyring](https://github.com/zalando/go-keyring) instead but I've abstracted to make the interactions the same.
 
 ## Contributing
