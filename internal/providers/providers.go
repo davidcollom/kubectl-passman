@@ -6,7 +6,7 @@ package providers
 import (
 	_ "github.com/chrisns/kubectl-passman/internal/providers/conjur"
 	_ "github.com/chrisns/kubectl-passman/internal/providers/gopass"
-	_ "github.com/chrisns/kubectl-passman/internal/providers/keychain"
+	_ "github.com/chrisns/kubectl-passman/internal/providers/keyring"
 	_ "github.com/chrisns/kubectl-passman/internal/providers/onepassword"
 	_ "github.com/chrisns/kubectl-passman/internal/providers/vault"
 )
