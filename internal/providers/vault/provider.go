@@ -1,6 +1,20 @@
+// Package vault provides a provider implementation for HashiCorp Vault,
+// enabling secure storage and retrieval of Kubernetes and application secrets.
+// This package integrates with the kubectl-passman registry and implements the
+// provider.Provider interface, allowing secrets to be managed using Vault's API.
+//
+// Environment Variables:
+//
+//	VAULT_ADDR  - The address of the Vault server (required).
+//	VAULT_TOKEN - The authentication token for Vault (required).
+//
+// The Provider supports both KV v1 and KV v2 secret engines, automatically
+// handling secret data extraction. Secrets are referenced using the format
+// "secret/path/to/item:key", where ":key" is optional and defaults to "password".
 package vault
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -11,36 +25,48 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
-// Ensure Provider implements the provider.Provider interface
+// Ensure Provider implements the provider.Provider interface.
 var _ provider.Provider = &Provider{}
 
-// Provider implements the Provider interface for HashiCorp Vault
+// Provider implements the Provider interface for HashiCorp Vault.
 type Provider struct {
 	client  *api.Client
 	once    sync.Once
 	initErr error
 }
 
+var (
+	ErrNotConfigured   = errors.New("vault environment variables not set (VAULT_ADDR, VAULT_TOKEN)")
+	ErrSecretNotString = errors.New("secret value is not a string")
+)
+
+const (
+	// IntSecretPathItems is the number of items expected in the secret path split.
+	IntSecretPathItems = 2
+)
+
 func init() {
 	registry.Register(&Provider{})
 }
 
-// Name returns the name of the provider
+// Name returns the name of the provider.
 func (p *Provider) Name() string {
 	return "vault"
 }
 
-// Description returns a description of the provider
+// Description returns a description of the provider.
 func (p *Provider) Description() string {
 	return "Use HashiCorp Vault for storing your kubernetes and application secrets"
 }
 
-// Aliases returns alternative names for the provider
+// Aliases returns alternative names for the provider.
 func (p *Provider) Aliases() []string {
 	return []string{"hcv"}
 }
 
-// Get retrieves a secret from Vault
+var ErrSecretNotFound = errors.New("secret not found")
+
+// Get retrieves a secret from Vault.
 func (p *Provider) Get(itemName string) (string, error) {
 	if err := p.initClient(); err != nil {
 		return "", err
@@ -56,30 +82,37 @@ func (p *Provider) Get(itemName string) (string, error) {
 	}
 
 	if secret == nil {
-		return "", fmt.Errorf("secret not found at path: %s", path)
+		return "", fmt.Errorf("%w: %s", ErrSecretNotFound, path)
 	}
 
 	// Extract the specific key from the secret data
-	data, ok := secret.Data["data"].(map[string]interface{})
-	if !ok {
+	data, exists := secret.Data["data"].(map[string]interface{})
+	if !exists {
 		// Try direct access for non-KV v2 secrets
 		data = secret.Data
 	}
 
 	value, exists := data[key]
 	if !exists {
-		return "", fmt.Errorf("key '%s' not found in secret at path '%s'", key, path)
+		return "", fmt.Errorf(
+			"%w: key '%s' not found in path '%s'",
+			ErrKeyNotFoundInSecret,
+			key,
+			path,
+		)
 	}
 
 	valueStr, ok := value.(string)
 	if !ok {
-		return "", fmt.Errorf("secret value is not a string")
+		return "", ErrSecretNotString
 	}
 
 	return valueStr, nil
 }
 
-// Set stores a secret in Vault
+var ErrKeyNotFoundInSecret = errors.New("key not found in secret")
+
+// Set stores a secret in Vault.
 func (p *Provider) Set(itemName, secret string) error {
 	if err := p.initClient(); err != nil {
 		return err
@@ -104,7 +137,7 @@ func (p *Provider) Set(itemName, secret string) error {
 	return nil
 }
 
-// initClient initializes the Vault client lazily
+// initClient initialises the Vault client lazily.
 func (p *Provider) initClient() error {
 	p.once.Do(func() {
 		// Check required environment variables
@@ -112,7 +145,8 @@ func (p *Provider) initClient() error {
 		vaultToken := os.Getenv("VAULT_TOKEN")
 
 		if vaultAddr == "" || vaultToken == "" {
-			p.initErr = fmt.Errorf("vault environment variables not set (VAULT_ADDR, VAULT_TOKEN)")
+			p.initErr = ErrNotConfigured
+
 			return
 		}
 
@@ -125,6 +159,7 @@ func (p *Provider) initClient() error {
 		client, err := api.NewClient(config)
 		if err != nil {
 			p.initErr = fmt.Errorf("failed to create Vault client: %w", err)
+
 			return
 		}
 
@@ -138,13 +173,13 @@ func (p *Provider) initClient() error {
 }
 
 // parseSecretPath parses an itemName into a Vault path and key
-// Expected format: "secret/path/to/item:key" or just "secret/path/to/item" (defaults to "password" key)
-func (p *Provider) parseSecretPath(itemName string) (string, string) {
-	parts := strings.SplitN(itemName, ":", 2)
-	path := parts[0]
-	key := "password" // default key
+// Expected format: "secret/path/to/item:key" or just "secret/path/to/item" (defaults to "password" key).
+func (p *Provider) parseSecretPath(itemName string) (path string, key string) {
+	parts := strings.SplitN(itemName, ":", IntSecretPathItems)
+	path = parts[0]
+	key = "password" // default key
 
-	if len(parts) == 2 {
+	if len(parts) == IntSecretPathItems {
 		key = parts[1]
 	}
 

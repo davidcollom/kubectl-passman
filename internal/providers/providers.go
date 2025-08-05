@@ -1,7 +1,7 @@
+// Package providers imports all available provider implementations to ensure their
+// init() functions are executed, registering each provider with the central registry.
+// This design allows the CLI to access all supported providers through a single import.
 package providers
-
-// This package imports all provider implementations to trigger their init() functions
-// and register them with the registry. This provides a single import point for the CLI.
 
 import (
 	_ "github.com/chrisns/kubectl-passman/internal/providers/conjur"

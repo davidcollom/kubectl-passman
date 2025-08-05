@@ -7,21 +7,33 @@ import (
 )
 
 func TestProvider_Name(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 	require.Equal(t, "conjur", provider.Name())
 }
 
 func TestProvider_Description(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
-	require.Equal(t, "Use CyberArk Conjur for storing your kubernetes and application secrets", provider.Description())
+	require.Equal(
+		t,
+		"Use CyberArk Conjur for storing your kubernetes and application secrets",
+		provider.Description(),
+	)
 }
 
 func TestProvider_Aliases(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 	require.Equal(t, []string{"ca"}, provider.Aliases())
 }
 
 func TestProvider_Get_NoConfiguration(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	// Without configuration, it should fail
@@ -31,6 +43,8 @@ func TestProvider_Get_NoConfiguration(t *testing.T) {
 }
 
 func TestProvider_Set_NotSupported(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	// Set operation is not supported for Conjur

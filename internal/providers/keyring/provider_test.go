@@ -1,6 +1,10 @@
+// Keyring isn't threadsafe in mocking... The mock modifies a global variable.
+//
+//nolint:paralleltest
 package keyring
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -10,10 +14,15 @@ import (
 	keyring "github.com/zalando/go-keyring"
 )
 
+var ErrMockError = errors.New("mock error")
+
 func TestMain(m *testing.M) {
 	keyring.MockInit()
 	// Mock a keyring entry for testing
-	_ = keyring.Set(Service, "foo", "bar")
+	err := keyring.Set(serviceName, "foo", "bar")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to set mock keyring entry: %v\n", err))
+	}
 
 	// Setup code if needed
 	code := m.Run()
@@ -49,7 +58,7 @@ func TestProvider_Get_Success(t *testing.T) {
 func TestProvider_Get_Error(t *testing.T) {
 	p := &Provider{}
 	val, err := p.Get("foobar")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Empty(t, val)
 }
 
@@ -60,12 +69,13 @@ func TestProvider_Set_Success(t *testing.T) {
 }
 
 func TestProvider_Set_Error(t *testing.T) {
-	keyring.MockInitWithError(fmt.Errorf("mock error"))
+	keyring.MockInitWithError(ErrMockError)
 	t.Cleanup(func() {
 		keyring.MockInit() // Reset mock state
 	})
 
 	p := &Provider{}
 	err := p.Set("foo", "baryou")
-	assert.Error(t, err)
+	require.Error(t, err)
+	assert.Equal(t, ErrMockError, err)
 }

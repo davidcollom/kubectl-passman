@@ -7,21 +7,33 @@ import (
 )
 
 func TestProvider_Name(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 	require.Equal(t, "vault", provider.Name())
 }
 
 func TestProvider_Description(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
-	require.Equal(t, "Use HashiCorp Vault for storing your kubernetes and application secrets", provider.Description())
+	require.Equal(
+		t,
+		"Use HashiCorp Vault for storing your kubernetes and application secrets",
+		provider.Description(),
+	)
 }
 
 func TestProvider_Aliases(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 	require.Equal(t, []string{"hcv"}, provider.Aliases())
 }
 
 func TestProvider_Get_NoEnvironmentVariables(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	// Without environment variables, it should fail
@@ -31,6 +43,8 @@ func TestProvider_Get_NoEnvironmentVariables(t *testing.T) {
 }
 
 func TestProvider_Set_NoEnvironmentVariables(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	// Without environment variables, it should fail
@@ -40,6 +54,8 @@ func TestProvider_Set_NoEnvironmentVariables(t *testing.T) {
 }
 
 func TestProvider_ParseSecretPath(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	tests := []struct {
@@ -70,6 +86,8 @@ func TestProvider_ParseSecretPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			gotPath, gotKey := provider.parseSecretPath(tt.input)
 			require.Equal(t, tt.wantPath, gotPath)
 			require.Equal(t, tt.wantKey, gotKey)

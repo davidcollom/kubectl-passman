@@ -7,21 +7,33 @@ import (
 )
 
 func TestProvider_Name(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 	require.Equal(t, "1password", provider.Name())
 }
 
 func TestProvider_Description(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
-	require.Equal(t, "Use 1Password Connect for storing your kubernetes authentication secrets", provider.Description())
+	require.Equal(
+		t,
+		"Use 1Password Connect for storing your kubernetes authentication secrets",
+		provider.Description(),
+	)
 }
 
 func TestProvider_Aliases(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 	require.Equal(t, []string{"1pass", "op"}, provider.Aliases())
 }
 
 func TestProvider_Get_NoEnvironmentVariables(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	// Without environment variables, it should fail
@@ -31,6 +43,8 @@ func TestProvider_Get_NoEnvironmentVariables(t *testing.T) {
 }
 
 func TestProvider_Set_NoEnvironmentVariables(t *testing.T) {
+	t.Parallel()
+
 	provider := &Provider{}
 
 	// Without environment variables, it should fail

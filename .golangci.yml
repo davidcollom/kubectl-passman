@@ -1,16 +1,31 @@
 version: "2"
 
-
 linters:
   default: all
   disable:
     - wsl
     - gochecknoglobals
-    - rowserrcheck # disabled due to generics issues
-    - sqlclosecheck # disabled due to generics issues
-    - wastedassign # disabled due to generics issues
+    # - rowserrcheck # disabled due to generics issues
+    # - sqlclosecheck # disabled due to generics issues
+    # - wastedassign # disabled due to generics issues
+    # Temp disable as too noisy
+    - testpackage
+    - wrapcheck
+    - exhaustruct
+    - gochecknoinits
+    - forbidigo # I don't get the point of this one
+    - noinlineerr # I don't agree with this one.
+    - nonamedreturns # conflicts with gocritic unnamedResult
+    - ireturn # Not sure on this one - Why returning an interface is bad?
 
   settings:
+    varnamelen:
+      min-name-length: 2
+    revive:
+      rules:
+        - name: "package-comments"
+          exclude:
+            - "**/main.go"
     errcheck:
       check-type-assertions: true
       check-blank: true
@@ -28,7 +43,7 @@ linters:
             - pkg: "github.com/pkg/errors"
               desc: "use standard errors package"
     misspell:
-      locale: US
+      locale: UK
     lll:
       line-length: 120
     unused:
@@ -46,17 +61,26 @@ linters:
       # Enable multiple checks by tags, run `GL_DEBUG=gocritic golangci-lint` run to see all tags and checks.
       # Empty list by default. See https://github.com/go-critic/go-critic#usage -> section "Tags".
       enabled-tags:
-        - performance
-        - opinionated
-        - diagnostic
-        - style
+        ["diagnostic", "style", "performance", "experimental", "opinionated"]
+      disabled-checks:
+        - whyNoLint
+        - paramTypeCombine
     whitespace:
       multi-if: false
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+    - swaggo
 
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  new: true
+  # new: true
   # exclude-rules:
   #   # Exclude some linters from running on tests files.
   #   - path: _test\.go

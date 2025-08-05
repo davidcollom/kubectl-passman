@@ -1,3 +1,6 @@
+// Package provider defines the interface that must be implemented by anypassword manager provider.
+// It specifies methods for retrieving and storing credentials, as well as obtaining metadata
+// such as the provider's name, description, and alternative aliases.
 package provider
 
 // Provider represents a password manager provider interface.
