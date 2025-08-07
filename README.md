@@ -40,6 +40,8 @@ Provider | Supports | Example command
 keychain | [Mac OS Keychain](https://support.apple.com/en-gb/guide/keychain-access/kyca1083/mac) <br> [GNOME Keyring](https://wiki.gnome.org/Projects/GnomeKeyring) <br> [Windows Credential Manager](http://blogs.msdn.com/b/visualstudioalm/archive/2015/12/08/announcing-the-git-credential-manager-for-windows-1-0.aspx) | `kubectl passman keychain [item] [token]`
 1password | [1password](https://1password.com/) <br> requires [1password cli](https://1password.com/downloads/command-line/) | `kubectl passman 1password [item] [token]`
 gopass | [gopass](https://www.gopass.pw/) | `kubectl passman gopass [item] [token]`
+conjur | [CyberArk Conjur](https://www.conjur.org/) | `kubectl passman conjur [item] [token]`
+vault | [HashiCorp Vault](https://www.hashicorp.com/en/products/vault) | `kubectl passman vault [item] [token]`
 
 ## Installation
 
@@ -106,7 +108,7 @@ kubectl config set-credentials \
   kubectl-prod-user \
  --exec-api-version=client.authentication.k8s.io/v1beta1 \
  --exec-command=kubectl-passman \
- --exec-arg=keychain \ # or 1password
+ --exec-arg=keychain \ # or 1password or vault or conjur
  --exec-arg=kubectl-prod-user # name of [item-name] you used when you wrote to the password manager
 ```
 
@@ -135,7 +137,7 @@ make test
 
 ```
 kubectl-passman/
-├── cmd/kubectl-passman/     # Main application entry point
+├── cmd/                     # Main application entry point
 ├── internal/                # Private application code
 │   ├── cli/                 # CLI application logic
 │   └── providers/           # Password manager providers
@@ -150,7 +152,7 @@ kubectl-passman/
 make build
 
 # Or directly with go
-go build ./cmd/kubectl-passman
+go build ./cmd/
 ```
 
 > Note: kubectl-passman will build slightly differently on Darwin (Mac OS) to other operation systems because it uses the [go-keychain](https://github.com/keybase/go-keychain) library that needs libraries that only exist on a mac so that it can natively talk to the keychain. When compiling for other operating systems you'll get [go-keyring](https://github.com/zalando/go-keyring) instead but I've abstracted to make the interactions the same.
