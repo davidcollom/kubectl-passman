@@ -9,7 +9,7 @@ require github.com/stretchr/testify v1.10.0
 require (
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/creasty/defaults v1.8.0
-	github.com/cyberark/conjur-api-go v0.13.2
+	github.com/cyberark/conjur-api-go v0.13.3
 	github.com/gopasspw/gopass v1.15.16
 	github.com/hashicorp/vault/api v1.20.0
 	github.com/urfave/cli v1.22.17
