@@ -9,13 +9,13 @@ require github.com/stretchr/testify v1.10.0
 require (
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/creasty/defaults v1.8.0
-	github.com/cyberark/conjur-api-go v0.13.2
+	github.com/cyberark/conjur-api-go v0.13.3
 	github.com/gopasspw/gopass v1.15.16
 	github.com/hashicorp/vault/api v1.20.0
 	github.com/urfave/cli v1.22.17
 	github.com/zalando/go-keyring v0.2.6
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/client-go v0.33.3
+	k8s.io/client-go v0.33.4
 )
 
 require (
@@ -85,7 +85,7 @@ require (
 	golang.org/x/time v0.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apimachinery v0.33.3 // indirect
+	k8s.io/apimachinery v0.33.4 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
