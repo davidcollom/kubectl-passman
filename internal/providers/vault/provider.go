@@ -86,7 +86,7 @@ func (p *Provider) Get(itemName string) (string, error) {
 	}
 
 	// Extract the specific key from the secret data
-	data, exists := secret.Data["data"].(map[string]interface{})
+	data, exists := secret.Data["data"].(map[string]any)
 	if !exists {
 		// Try direct access for non-KV v2 secrets
 		data = secret.Data
@@ -122,8 +122,8 @@ func (p *Provider) Set(itemName, secret string) error {
 	path, key := p.parseSecretPath(itemName)
 
 	// Prepare the data for KV v2 engine (most common)
-	data := map[string]interface{}{
-		"data": map[string]interface{}{
+	data := map[string]any{
+		"data": map[string]any{
 			key: secret,
 		},
 	}

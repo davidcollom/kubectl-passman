@@ -1,11 +1,6 @@
-// Package cli provides import functionality for migrating kubeconfig credentials
-// to password managers. This module handles backing up existing kubeconfigs,
-// extracting credentials, storing them in the selected provider, and generating
-// new kubeconfig files with exec plugin configurations.
 package cli
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,16 +13,14 @@ import (
 	"github.com/chrisns/kubectl-passman/pkg/passman"
 	"github.com/chrisns/kubectl-passman/pkg/provider"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v3"
-
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
-// Create a local alias for Kubeconfig.
+// KubeConfig creates a local alias for Kubeconfig.
 type KubeConfig = api.Config
 
-// Create a local alias for UserInfo.
+// UserInfo creates a local alias for UserInfo.
 type UserInfo = api.AuthInfo
 
 var (
@@ -121,7 +114,7 @@ func handleImportCommand(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("\n=== Finalizing Import ===")
+	fmt.Println("\n=== Finalising Import ===")
 
 	if err := finalizeImport(config, kubeconfig); err != nil {
 		return err
@@ -207,6 +200,7 @@ func printUsersToMigrate(usersToMigrate []string) {
 func handleBackup(config *importConfig) error {
 	if config.dryRun {
 		fmt.Println("⏭️  Skipping backup (dry-run mode)")
+
 		return nil
 	}
 
@@ -222,6 +216,12 @@ func handleBackup(config *importConfig) error {
 	return nil
 }
 
+// migrationStats tracks the results of user migrations.
+type migrationStats struct {
+	migrated int
+	skipped  int
+}
+
 // processUserMigrations handles the migration of all users.
 func processUserMigrations(
 	kubeconfig *KubeConfig,
@@ -229,62 +229,118 @@ func processUserMigrations(
 	config *importConfig,
 	prov provider.Provider,
 ) error {
-	migratedCount := 0
-	skippedCount := 0
+	stats := &migrationStats{}
 
 	for i, userName := range usersToMigrate {
-		credentialName := fmt.Sprintf("%s-%s", config.prefix, userName)
-
-		fmt.Printf("🔄 [%d/%d] Migrating user '%s'...\n", i+1, len(usersToMigrate), userName)
-
-		if config.dryRun {
-			fmt.Printf("   ⏭️  Would migrate to credential '%s' (dry-run)\n", credentialName)
-
-			continue
-		}
-
-		err := migrateUser(kubeconfig,
+		err := processSingleUserMigration(
+			kubeconfig,
 			userName,
-			credentialName,
+			i+1,
+			len(usersToMigrate),
+			config,
 			prov,
-			config.providerName,
-			config.force,
+			stats,
 		)
 		if err != nil {
-			// Check if it's just a credential already exists error
-			if errors.Is(err, ErrCredentialAlreadyExists) {
-				fmt.Printf("   ⚠️  Credential '%s' already exists (skipping, use --force to overwrite)\n", credentialName)
-				skippedCount++
-				continue
-			}
-			// Handle validation errors
-			if errors.Is(err, ErrCredentialValidation) || errors.Is(err, ErrNoCredentialsFound) {
-				fmt.Printf("   ⚠️  Failed to process credentials for '%s': %v (skipping)\n", userName, err)
-				skippedCount++
-				continue
-			}
-			return fmt.Errorf("Failed to migrate user: %w", err)
-		}
-
-		fmt.Printf("   ✅ Successfully migrated to credential '%s'\n", credentialName)
-		migratedCount++
-	}
-
-	if !config.dryRun {
-		if skippedCount > 0 {
-			fmt.Printf("✅ Migration completed: %d migrated, %d skipped (errors or already exist)\n", migratedCount, skippedCount)
-		} else {
-			fmt.Printf("✅ All %d user(s) migrated successfully!\n", migratedCount)
+			return err
 		}
 	}
+
+	printMigrationSummary(config, stats)
 
 	return nil
+}
+
+// processSingleUserMigration handles the migration of a single user.
+func processSingleUserMigration(
+	kubeconfig *KubeConfig,
+	userName string,
+	userIndex, totalUsers int,
+	config *importConfig,
+	prov provider.Provider,
+	stats *migrationStats,
+) error {
+	credentialName := fmt.Sprintf("%s-%s", config.prefix, userName)
+
+	fmt.Printf("🔄 [%d/%d] Migrating user '%s'...\n", userIndex, totalUsers, userName)
+
+	if config.dryRun {
+		fmt.Printf("   ⏭️  Would migrate to credential '%s' (dry-run)\n", credentialName)
+
+		return nil
+	}
+
+	err := migrateUser(
+		kubeconfig,
+		userName,
+		credentialName,
+		prov,
+		config.providerName,
+		config.force,
+	)
+	if err != nil {
+		return handleMigrationError(err, userName, credentialName, stats)
+	}
+
+	fmt.Printf("   ✅ Successfully migrated to credential '%s'\n", credentialName)
+
+	stats.migrated++
+
+	return nil
+}
+
+// handleMigrationError processes errors that occur during user migration.
+func handleMigrationError(err error, userName, credentialName string, stats *migrationStats) error {
+	// Check if it's just a credential already exists error
+	if errors.Is(err, ErrCredentialAlreadyExists) {
+		fmt.Printf(
+			"   ⚠️  Credential '%s' already exists (skipping, use --force to overwrite)\n",
+			credentialName,
+		)
+
+		stats.skipped++
+
+		return nil
+	}
+
+	// Handle validation errors
+	if errors.Is(err, ErrCredentialValidation) || errors.Is(err, ErrNoCredentialsFound) {
+		fmt.Printf(
+			"   ⚠️  Failed to process credentials for '%s': %v (skipping)\n",
+			userName,
+			err,
+		)
+
+		stats.skipped++
+
+		return nil
+	}
+
+	return fmt.Errorf("failed to migrate user: %w", err)
+}
+
+// printMigrationSummary prints the final migration results.
+func printMigrationSummary(config *importConfig, stats *migrationStats) {
+	if config.dryRun {
+		return
+	}
+
+	if stats.skipped > 0 {
+		fmt.Printf(
+			"✅ Migration completed: %d migrated, %d skipped (errors or already exist)\n",
+			stats.migrated,
+			stats.skipped,
+		)
+	} else {
+		fmt.Printf("✅ All %d user(s) migrated successfully!\n", stats.migrated)
+	}
 }
 
 // finalizeImport writes the updated kubeconfig if not in dry-run mode.
 func finalizeImport(config *importConfig, kubeconfig *KubeConfig) error {
 	if config.dryRun {
 		fmt.Println("⏭️  Skipping kubeconfig update (dry-run mode)")
+
 		return nil
 	}
 
@@ -312,29 +368,6 @@ func getDefaultKubeconfigPath() string {
 	}
 
 	return filepath.Clean(filepath.Join(homeDir, ".kube", "config"))
-}
-
-// loadKubeconfig loads and parses a kubeconfig file.
-func loadKubeconfig(path string) (*KubeConfig, error) {
-	// Validate the file path to prevent directory traversal
-	cleanPath := filepath.Clean(path)
-	if strings.Contains(cleanPath, "..") {
-		return nil, fmt.Errorf("invalid file path: %s", path)
-	}
-
-	data, err := os.ReadFile(cleanPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read kubeconfig file: %w", err)
-	}
-
-	var kubeconfig KubeConfig
-
-	err = yaml.Unmarshal(data, &kubeconfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse kubeconfig YAML: %w", err)
-	}
-
-	return &kubeconfig, nil
 }
 
 // findUsersWithCredentials identifies users that have direct credentials.
@@ -407,12 +440,6 @@ func migrateUser(
 		return fmt.Errorf("%w: %s", ErrUserNotFound, userName)
 	}
 
-	// // Extract credentials
-	// credentials := extractCredentials(userInfo)
-	// if len(credentials) == 0 {
-	// 	return fmt.Errorf("%w: %s", ErrNoCredentialsFound, userName)
-	// }
-
 	// Convert to JSON for storage
 	credentialJSON, err := json.Marshal(userInfo)
 	if err != nil {
@@ -422,7 +449,7 @@ func migrateUser(
 	// Validate the credential format
 	validatedCredential, err := passman.FormatValidator(string(credentialJSON))
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCredentialValidation, err)
+		return fmt.Errorf("%w: %w", ErrCredentialValidation, err)
 	}
 
 	// Check if credential already exists (unless force is used)
@@ -443,40 +470,6 @@ func migrateUser(
 	updateUserToExecPlugin(userInfo, credentialName, providerName)
 
 	return nil
-}
-
-// extractCredentials extracts credentials from a UserInfo struct.
-func extractCredentials(userInfo *UserInfo) map[string]string {
-	credentials := make(map[string]string)
-
-	if userInfo.Token != "" {
-		credentials["token"] = userInfo.Token
-	}
-
-	// Handle certificate data - these are already decoded bytes, need to base64 encode for storage
-	if len(userInfo.ClientCertificateData) != 0 {
-		credentials["client-certificate-data"] = base64.StdEncoding.EncodeToString(userInfo.ClientCertificateData)
-	}
-
-	if len(userInfo.ClientKeyData) != 0 {
-		credentials["client-key-data"] = base64.StdEncoding.EncodeToString(userInfo.ClientKeyData)
-	}
-
-	// Handle certificate files - these are file paths
-	if userInfo.ClientCertificate != "" {
-		credentials["client-certificate"] = userInfo.ClientCertificate
-	}
-
-	if userInfo.ClientKey != "" {
-		credentials["client-key"] = userInfo.ClientKey
-	}
-
-	if userInfo.Username != "" && userInfo.Password != "" {
-		credentials["username"] = userInfo.Username
-		credentials["password"] = userInfo.Password
-	}
-
-	return credentials
 }
 
 // updateUserToExecPlugin updates a user configuration to use the exec plugin.
