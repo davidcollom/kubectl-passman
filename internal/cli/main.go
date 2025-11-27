@@ -21,7 +21,6 @@
 package cli
 
 import (
-
 	// Import all providers through the providers package.
 	_ "github.com/chrisns/kubectl-passman/internal/providers"
 	"github.com/chrisns/kubectl-passman/internal/registry"

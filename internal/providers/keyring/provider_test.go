@@ -1,6 +1,3 @@
-// Keyring isn't threadsafe in mocking... The mock modifies a global variable.
-//
-//nolint:paralleltest
 package keyring
 
 import (
@@ -31,17 +28,23 @@ func TestMain(m *testing.M) {
 }
 
 func TestProvider_Name(t *testing.T) {
+	t.Parallel()
+
 	p := &Provider{}
 	assert.Equal(t, "keychain", p.Name())
 }
 
 func TestProvider_Description(t *testing.T) {
+	t.Parallel()
+
 	p := &Provider{}
 	want := "Use your systems keychain/keyring for storing your kubernetes and application secrets"
 	assert.Equal(t, want, p.Description())
 }
 
 func TestProvider_Aliases(t *testing.T) {
+	t.Parallel()
+
 	p := &Provider{}
 	want := []string{"keyring", "kr"}
 	got := p.Aliases()
@@ -49,6 +52,8 @@ func TestProvider_Aliases(t *testing.T) {
 }
 
 func TestProvider_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	p := &Provider{}
 	val, err := p.Get("foo")
 	require.NoError(t, err)
@@ -56,6 +61,8 @@ func TestProvider_Get_Success(t *testing.T) {
 }
 
 func TestProvider_Get_Error(t *testing.T) {
+	t.Parallel()
+
 	p := &Provider{}
 	val, err := p.Get("foobar")
 	require.Error(t, err)
@@ -63,12 +70,15 @@ func TestProvider_Get_Error(t *testing.T) {
 }
 
 func TestProvider_Set_Success(t *testing.T) {
+	t.Parallel()
+
 	p := &Provider{}
 	err := p.Set("foobar", "barfuzz")
 	assert.NoError(t, err)
 }
 
 func TestProvider_Set_Error(t *testing.T) {
+	t.Parallel()
 	keyring.MockInitWithError(ErrMockError)
 	t.Cleanup(func() {
 		keyring.MockInit() // Reset mock state
