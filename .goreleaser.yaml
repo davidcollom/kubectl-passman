@@ -29,10 +29,10 @@ builds:
       - amd64
       - arm64
       - arm
-      - 386
+      - "386"
     ignore:
       - goos: darwin
-        goarch: 386
+        goarch: "386"
       - goos: darwin
         goarch: arm
       - goos: windows
@@ -58,7 +58,7 @@ archives:
       - README.md
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
@@ -68,27 +68,27 @@ changelog:
   use: github
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^ci:'
-      - '^build:'
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^build:"
       - typo
       - Merge pull request
       - Merge branch
   groups:
-    - title: 'New Features'
+    - title: "New Features"
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: 'Bug Fixes'
+    - title: "Bug Fixes"
       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: 'Performance Improvements'
+    - title: "Performance Improvements"
       regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
       order: 2
-    - title: 'Dependencies'
+    - title: "Dependencies"
       regexp: '^.*?deps(\([[:word:]]+\))??!?:.+$'
       order: 3
-    - title: 'Other'
+    - title: "Other"
       order: 999
 
 release:
@@ -134,7 +134,7 @@ brews:
     homepage: https://github.com/chrisns/kubectl-passman
     description: Store kubeconfig credentials in keychains or password managers
     license: Apache-2.0
-    folder: Formula
+    directory: Formula
     dependencies:
       - name: kubectl
     test: |

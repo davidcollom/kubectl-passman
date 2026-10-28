@@ -26,7 +26,7 @@ jobs:
       - name: Run tests
         run: go test -v ./...
       - name: Build
-        run: go build -v ./cmd/kubectl-passman
+        run: go build -v -o kubectl-passman ./cmd/
 
   lint:
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
         with:
           go-version-file: './go.mod'
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
 

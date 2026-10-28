@@ -16,7 +16,7 @@ const (
 
 // Provider provides common metadata methods for all keychain providers.
 type Provider struct {
-	mu sync.Mutex
+	mu sync.RWMutex
 }
 
 // Ensure Provider implements the provider.Provider interface (except Get/Set).
@@ -39,8 +39,8 @@ func (b *Provider) Aliases() []string {
 
 // Get returns an error for the base implementation - should be overridden.
 func (b *Provider) Get(itemName string) (string, error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 
 	return keyring.Get(serviceName, itemName)
 }
@@ -51,4 +51,12 @@ func (b *Provider) Set(itemName, secret string) error {
 	defer b.mu.Unlock()
 
 	return keyring.Set(serviceName, itemName, secret)
+}
+
+// Delete returns an error if the base implementation - should be overridden.
+func (b *Provider) Delete(itemName string) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	return keyring.Delete(serviceName, itemName)
 }

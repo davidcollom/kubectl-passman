@@ -4,6 +4,7 @@
 package registry
 
 import (
+	"maps"
 	"sync"
 
 	"github.com/chrisns/kubectl-passman/pkg/provider"
@@ -52,9 +53,7 @@ func GetAllProviders() map[string]provider.Provider {
 
 	// Return a copy to avoid race conditions
 	result := make(map[string]provider.Provider)
-	for name, p := range registry.providers {
-		result[name] = p
-	}
+	maps.Copy(result, registry.providers)
 
 	return result
 }
